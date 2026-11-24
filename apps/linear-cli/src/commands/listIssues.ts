@@ -8,39 +8,19 @@ export async function listIssues(linear: LinearClient | undefined) {
 		}
 
 		const user = await linear.viewer
-		const issues = await user.assignedIssues({ first: 50 })
+		const issues = await user.assignedIssues({
+			first: 50,
+			filter: { state: { type: { nin: ['completed', 'canceled', 'duplicate'] } } },
+		})
 
 		console.log(chalk.bold('\nYour assigned issues:'))
 
 		if (!issues.nodes.length) {
-			console.log(chalk.yellow('No issues assigned to you.'))
-			return
-		}
-
-		// Filter out completed and canceled issues
-		const activeIssues = []
-
-		for (const issue of issues.nodes) {
-			const state = await issue.state
-			// Skip issues that are completed, canceled, or done
-			if (
-				state &&
-				(state.name.toLowerCase().includes('done') ||
-					state.name.toLowerCase().includes('completed') ||
-					state.name.toLowerCase().includes('canceled') ||
-					state.name.toLowerCase().includes('cancelled'))
-			) {
-				continue
-			}
-			activeIssues.push(issue)
-		}
-
-		if (activeIssues.length === 0) {
 			console.log(chalk.yellow('No active issues assigned to you.'))
 			return
 		}
 
-		activeIssues.forEach((issue) => {
+		issues.nodes.forEach((issue) => {
 			console.log(`[${chalk.cyan(issue.identifier)}] ${issue.title}`)
 		})
 
